@@ -88,7 +88,12 @@ class FlutterEnginePluginRegistry implements PluginRegistry,
   private ContentProvider contentProvider;
   @Nullable
   private FlutterEngineContentProviderPluginBinding contentProviderPluginBinding;
-
+  /**
+   * FlutterEngine的plugin的注入器
+   * @param appContext
+   * @param flutterEngine
+   * @param flutterLoader
+   */
   FlutterEnginePluginRegistry(
       @NonNull Context appContext,
       @NonNull FlutterEngine flutterEngine,

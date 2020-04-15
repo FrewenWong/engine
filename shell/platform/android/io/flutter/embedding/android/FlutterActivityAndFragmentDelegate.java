@@ -149,11 +149,13 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
    * </ol>
    */
   void onAttach(@NonNull Context context) {
+    // host == null 为什么？？
     ensureAlive();
 
     // When "retain instance" is true, the FlutterEngine will survive configuration
     // changes. Therefore, we create a new one only if one does not already exist.
     if (flutterEngine == null) {
+      // Flutter引擎的创建以及实例化
       setupFlutterEngine();
     }
 
@@ -203,8 +205,11 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
     Log.d(TAG, "Setting up FlutterEngine.");
 
     // First, check if the host wants to use a cached FlutterEngine.
+    // 首先检查Host是否需要使用缓存的引擎。
+    // 这个就是我们为什么要构建缓存引擎的时候一定要传ID的原因
     String cachedEngineId = host.getCachedEngineId();
     if (cachedEngineId != null) {
+      // 从引擎池里面取出引擎
       flutterEngine = FlutterEngineCache.getInstance().get(cachedEngineId);
       isFlutterEngineFromHost = true;
       if (flutterEngine == null) {
@@ -212,8 +217,9 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
       }
       return;
     }
-
+    // 很好理解，上面如果已经有了缓冲引擎池，那么下面我们就不需要构建了。
     // Second, defer to subclasses for a custom FlutterEngine.
+    // 第二步，再检查host提供的flutter的引擎
     flutterEngine = host.provideFlutterEngine(host.getContext());
     if (flutterEngine != null) {
       isFlutterEngineFromHost = true;
@@ -224,6 +230,8 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
     // FlutterView.
     Log.d(TAG, "No preferred FlutterEngine was provided. Creating a new FlutterEngine for"
         + " this FlutterFragment.");
+    // 只有不使用缓存的FlutterEngine.也不使用flutterActivity提供的FlutterEngine。
+    // FlutterEngine才在最后一步创建
     flutterEngine = new FlutterEngine(host.getContext(), host.getFlutterShellArgs().toArray());
     isFlutterEngineFromHost = false;
   }

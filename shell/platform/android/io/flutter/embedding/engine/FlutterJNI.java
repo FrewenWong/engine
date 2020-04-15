@@ -32,6 +32,7 @@ import io.flutter.view.FlutterCallbackInformation;
 
 /**
  * Interface between Flutter embedding's Java code and Flutter engine's C/C++ code.
+ * 这个就是Flutter的Java代码和flutter引擎的C/C++代码。有点类似于ReactNative的bridge
  *
  * Flutter's engine is built with C/C++. The Android Flutter embedding is responsible for
  * coordinating Android OS events and app user interactions with the C/C++ engine. Such coordination
@@ -769,6 +770,7 @@ public class FlutterJNI {
   // Called by native.
   @SuppressWarnings("unused")
   private void onPreEngineRestart() {
+    // 这个方法是由native来调用。进行生命周期时间的监听的分发
     for (EngineLifecycleListener listener : engineLifecycleListeners) {
       listener.onPreEngineRestart();
     }
@@ -785,7 +787,7 @@ public class FlutterJNI {
 
   // TODO(mattcarroll): determine if this is nonull or nullable
   private native Bitmap nativeGetBitmap(long nativePlatformViewId);
-
+  // 保证运行在UI线程。这个应该抽成公共方法
   private void ensureRunningOnMainThread() {
     if (Looper.myLooper() != mainLooper) {
       throw new RuntimeException(

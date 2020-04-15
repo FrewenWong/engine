@@ -413,9 +413,13 @@ public class FlutterActivity extends Activity
     super.onCreate(savedInstanceState);
 
     lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE);
-
+    // 实例化FlutterActivityAndFragmentDelegate。传入当前宿主对象
+    // 封装了宿主Activity的一些特殊属性
     delegate = new FlutterActivityAndFragmentDelegate(this);
+    // delegate绑定当前的Activity
+    // attach传入的this是没用的。主要绑定关系还是在上面
     delegate.onAttach(this);
+    
     delegate.onActivityCreated(savedInstanceState);
 
     configureWindowForTransparency();
@@ -865,6 +869,7 @@ public class FlutterActivity extends Activity
   @Nullable
   @Override
   public PlatformPlugin providePlatformPlugin(@Nullable Activity activity, @NonNull FlutterEngine flutterEngine) {
+    // 这个是由FlutterActivity平台插件，为什么这个要写在FlutterActivity
     if (activity != null) {
       return new PlatformPlugin(getActivity(), flutterEngine.getPlatformChannel());
     } else {

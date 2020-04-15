@@ -27,6 +27,7 @@ import java.util.*;
 
 /**
  * Finds Flutter resources in an application APK and also loads Flutter's native library.
+ * 这个类主要的作用就是在APK中查找Flutter资源。同样需要加载Native库
  */
 public class FlutterLoader {
     private static final String TAG = "FlutterLoader";
@@ -70,6 +71,8 @@ public class FlutterLoader {
      * The returned instance loads Flutter native libraries in the standard way. A singleton object
      * is used instead of static methods to facilitate testing without actually running native
      * library linking.
+     * 单例模式：首先只是实例化FlutterLoader
+     * 目前看最早的实例化是在FLutterEngine实例化的传入FlutterLoader自身实例对象
      */
     @NonNull
     public static FlutterLoader getInstance() {
@@ -109,16 +112,19 @@ public class FlutterLoader {
         if (this.settings != null) {
           return;
         }
+        // 保证主线程启动
         if (Looper.myLooper() != Looper.getMainLooper()) {
           throw new IllegalStateException("startInitialization must be called on the main thread");
         }
-
+        // 暂存设置对象
         this.settings = settings;
-
+        // 启动计时
         long initStartTimestampMillis = SystemClock.uptimeMillis();
+        // 初始化源数据配置
         initConfig(applicationContext);
+        // 初始化资源文件
         initResources(applicationContext);
-
+        // 加载flutter.so
         System.loadLibrary("flutter");
 
         VsyncWaiter
@@ -131,6 +137,7 @@ public class FlutterLoader {
         // from the Timeline timestamp at the current moment (the assumption is that the overhead
         // of the JNI call is negligible).
         long initTimeMillis = SystemClock.uptimeMillis() - initStartTimestampMillis;
+        // 为什么Native层要记录这个启动的时间差？？
         FlutterJNI.nativeRecordStartTimestamp(initTimeMillis);
     }
 
@@ -190,6 +197,7 @@ public class FlutterLoader {
 
             String appStoragePath = PathUtils.getFilesDir(applicationContext);
             String engineCachesPath = PathUtils.getCacheDirectory(applicationContext);
+            // nativeInit开始执行nativeInit
             FlutterJNI.nativeInit(applicationContext, shellArgs.toArray(new String[0]),
                 kernelPath, appStoragePath, engineCachesPath);
 
@@ -252,6 +260,7 @@ public class FlutterLoader {
      * manifest XML file, falling back to default values.
      */
     private void initConfig(@NonNull Context applicationContext) {
+        // manifestfile.XML的源数据解析
         Bundle metadata = getApplicationInfo(applicationContext).metaData;
 
         // There isn't a `<meta-data>` tag as a direct child of `<application>` in
@@ -259,7 +268,7 @@ public class FlutterLoader {
         if (metadata == null) {
             return;
         }
-
+        // 这些源数据的解析，我们后续分析
         aotSharedLibraryName = metadata.getString(PUBLIC_AOT_SHARED_LIBRARY_NAME, DEFAULT_AOT_SHARED_LIBRARY_NAME);
         flutterAssetsDir = metadata.getString(PUBLIC_FLUTTER_ASSETS_DIR_KEY, DEFAULT_FLUTTER_ASSETS_DIR);
 
@@ -283,6 +292,8 @@ public class FlutterLoader {
 
             // In debug/JIT mode these assets will be written to disk and then
             // mapped into memory so they can be provided to the Dart VM.
+            // 虚拟机快照数据？？
+            // 隔离快照数据
             resourceExtractor
                 .addResource(fullAssetPathFrom(vmSnapshotData))
                 .addResource(fullAssetPathFrom(isolateSnapshotData))

@@ -145,10 +145,12 @@ public class FlutterEngine {
   /**
    * Same as {@link #FlutterEngine(Context)} with added support for passing Dart
    * VM arguments.
+   * 传入在参数的Drt 虚拟器启动的参数的。dartVmArgs
    * <p>
    * If the Dart VM has already started, the given arguments will have no effect.
    */
   public FlutterEngine(@NonNull Context context, @Nullable String[] dartVmArgs) {
+    // 调用全参数的构造函数。
     this(context, FlutterLoader.getInstance(), new FlutterJNI(), dartVmArgs, true);
   }
 
@@ -174,18 +176,22 @@ public class FlutterEngine {
    */
   public FlutterEngine(
       @NonNull Context context,
-      @NonNull FlutterLoader flutterLoader,
-      @NonNull FlutterJNI flutterJNI,
-      @Nullable String[] dartVmArgs,
-      boolean automaticallyRegisterPlugins
+      @NonNull FlutterLoader flutterLoader,  //加载flutter资源的加载器
+      @NonNull FlutterJNI flutterJNI,        // flutter的Java和C/C++的通信结构
+      @Nullable String[] dartVmArgs,          // flutterVM虚拟机启动擦书
+      boolean automaticallyRegisterPlugins   // 自动注入插件
   ) {
+    // 
     this.flutterJNI = flutterJNI;
+    // FlutterLoader的初始化的相关操作
     flutterLoader.startInitialization(context);
+    // 保证flutterLoader的初始化完成
     flutterLoader.ensureInitializationComplete(context, dartVmArgs);
-
+    // 添加Flutter引擎的生命周期监听器
     flutterJNI.addEngineLifecycleListener(engineLifecycleListener);
+    //绑定到JNI？？这是什么逻辑？？
     attachToJni();
-
+    // 实例化Dart的执行器
     this.dartExecutor = new DartExecutor(flutterJNI, context.getAssets());
     this.dartExecutor.onAttachedToJNI();
 
@@ -203,13 +209,13 @@ public class FlutterEngine {
     textInputChannel = new TextInputChannel(dartExecutor);
 
     platformViewsController = new PlatformViewsController();
-
+    // 实例化pluginRegistry。传入的参数有context
     this.pluginRegistry = new FlutterEnginePluginRegistry(
       context.getApplicationContext(),
       this,
       flutterLoader
     );
-
+    // 判断
     if (automaticallyRegisterPlugins) {
       registerPlugins();
     }
