@@ -184,8 +184,11 @@ public class FlutterEngine {
     // 
     this.flutterJNI = flutterJNI;
     // FlutterLoader的初始化的相关操作
+    // 这个方法可能多次调用。如果是默认的flutter进程的时候
+    // 我们可能会在Application里面进行实例化
     flutterLoader.startInitialization(context);
     // 保证flutterLoader的初始化完成
+    // 调用FlutterLoader的ensureInitializationComplete()方法加载Flutter引擎需要的资源文件libapp.so
     flutterLoader.ensureInitializationComplete(context, dartVmArgs);
     // 添加Flutter引擎的生命周期监听器
     flutterJNI.addEngineLifecycleListener(engineLifecycleListener);
@@ -215,7 +218,7 @@ public class FlutterEngine {
       this,
       flutterLoader
     );
-    // 判断
+    // 判断是否需要自动注入plugins
     if (automaticallyRegisterPlugins) {
       registerPlugins();
     }

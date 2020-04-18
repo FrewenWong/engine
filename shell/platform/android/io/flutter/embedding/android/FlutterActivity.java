@@ -413,7 +413,7 @@ public class FlutterActivity extends Activity
     super.onCreate(savedInstanceState);
 
     lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE);
-    // 实例化FlutterActivityAndFragmentDelegate。传入当前宿主对象
+    // 实例化FlutterActivityAndFragmentDelegate。并持有当前宿主对象
     // 封装了宿主Activity的一些特殊属性
     delegate = new FlutterActivityAndFragmentDelegate(this);
     // delegate绑定当前的Activity

@@ -109,6 +109,7 @@ public class FlutterLoader {
      */
     public void startInitialization(@NonNull Context applicationContext, @NonNull Settings settings) {
         // Do not run startInitialization more than once.
+        // 多次调用的判断
         if (this.settings != null) {
           return;
         }
@@ -124,7 +125,7 @@ public class FlutterLoader {
         initConfig(applicationContext);
         // 初始化资源文件
         initResources(applicationContext);
-        // 加载flutter.so
+        // 加载flutter.so flutter引擎
         System.loadLibrary("flutter");
 
         VsyncWaiter
@@ -150,20 +151,24 @@ public class FlutterLoader {
      * @param args Flags sent to the Flutter runtime.
      */
     public void ensureInitializationComplete(@NonNull Context applicationContext, @Nullable String[] args) {
+        // 用一个标志变量来标记是否初始化过
         if (initialized) {
             return;
         }
+        // 保证主线程的调用
         if (Looper.myLooper() != Looper.getMainLooper()) {
           throw new IllegalStateException("ensureInitializationComplete must be called on the main thread");
         }
+        // 保证必须调用过startInitialization()方法
         if (settings == null) {
           throw new IllegalStateException("ensureInitializationComplete must be called after startInitialization");
         }
         try {
+            // 只有在DEBUG或者JIT_RELEASE模式下resourceExtractor才非空
             if (resourceExtractor != null) {
                 resourceExtractor.waitForCompletion();
             }
-
+            //初始化shell参数
             List<String> shellArgs = new ArrayList<>();
             shellArgs.add("--icu-symbol-prefix=_binary_icudtl_dat");
 
@@ -176,17 +181,22 @@ public class FlutterLoader {
 
             String kernelPath = null;
             if (BuildConfig.DEBUG || BuildConfig.JIT_RELEASE) {
+                // 在DEBUG或者JIT_RELEASE模式下加载asset下的资源
                 String snapshotAssetPath = PathUtils.getDataDirectory(applicationContext) + File.separator + flutterAssetsDir;
                 kernelPath = snapshotAssetPath + File.separator + DEFAULT_KERNEL_BLOB;
                 shellArgs.add("--" + SNAPSHOT_ASSET_PATH_KEY + "=" + snapshotAssetPath);
                 shellArgs.add("--" + VM_SNAPSHOT_DATA_KEY + "=" + vmSnapshotData);
                 shellArgs.add("--" + ISOLATE_SNAPSHOT_DATA_KEY + "=" + isolateSnapshotData);
             } else {
+                // RELEASE模式下加载nativeLibraryDir下的libapp.so文件
                 shellArgs.add("--" + AOT_SHARED_LIBRARY_NAME + "=" + aotSharedLibraryName);
 
+                // RELEASE模式下添加的是AOT_SHARED_LIBRARY_NAME参数,并且该参数添加了两次
+                // 仔细看第二次添加AOT_SHARED_LIBRARY_NAME参数前的一段注释，这个注释的信息非常重要：
                 // Most devices can load the AOT shared library based on the library name
                 // with no directory path.  Provide a fully qualified path to the library
                 // as a workaround for devices where that fails.
+                //这里很重要，如果libapp.so加载失败，可以设置libapp.so的全路径
                 shellArgs.add("--" + AOT_SHARED_LIBRARY_NAME + "=" + applicationInfo.nativeLibraryDir + File.separator + aotSharedLibraryName);
             }
 
@@ -198,6 +208,7 @@ public class FlutterLoader {
             String appStoragePath = PathUtils.getFilesDir(applicationContext);
             String engineCachesPath = PathUtils.getCacheDirectory(applicationContext);
             // nativeInit开始执行nativeInit
+            // 调用native方法加载libapp.so 并且传入上面shell参数
             FlutterJNI.nativeInit(applicationContext, shellArgs.toArray(new String[0]),
                 kernelPath, appStoragePath, engineCachesPath);
 
@@ -281,8 +292,9 @@ public class FlutterLoader {
      * files on disk.
      */
     private void initResources(@NonNull Context applicationContext) {
+        // 先清空资源
         new ResourceCleaner(applicationContext).start();
-
+        // 只在DEBUG或者JIT_RELEASE模式下执行
         if (BuildConfig.DEBUG || BuildConfig.JIT_RELEASE) {
             final String dataDirPath = PathUtils.getDataDirectory(applicationContext);
             final String packageName = applicationContext.getPackageName();
